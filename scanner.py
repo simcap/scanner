@@ -1,8 +1,9 @@
 import os, sys, subprocess, argparse, tempfile
 import xml.etree.ElementTree as XML
 
-parser = argparse.ArgumentParser(description='TCP Scan list of given IP addresses', epilog='Made by Simon with fun and love!')
-parser.add_argument('hosts', help='IPv4 address list to be scanned', nargs='*')
+parser = argparse.ArgumentParser(description='TCP Scan list of given hosts', epilog='Made by Simon with fun and love!')
+parser.add_argument('hosts', help='Host list to be scanned. Host can be any of ipv4, ipv6 or hostname', nargs='*')
+parser.add_argument('--fast', help='Fast mode - Scan fewer ports than the default scan', action='store_true')
 args = parser.parse_args()
 
 class NmapScan:
@@ -10,9 +11,22 @@ class NmapScan:
     bin_name = 'nmap'
 
     def run(self, hosts):
+        others = []
+        ipv6s = []
+        for h in hosts:
+            if self.is_ipv6(h):
+                ipv6s.append(h)
+            else:
+                others.append(h) 
+        options = []
+        if args.fast:   
+            options.append("-F")
+        return self.process_output([self.scan(ipv6s, options + ["-6"]), self.scan(others, options)])
+
+    def scan(self, hosts, extraflags=[]):
         xmlfile = tempfile.NamedTemporaryFile(suffix='-scan.xml', delete=False)
         process = subprocess.Popen(
-            ["nmap", "--stats-every", "1", "-oX", xmlfile.name, "-F", "-Pn", "-n"] + hosts,
+            ["nmap", "--stats-every", "0.2", "-oX", xmlfile.name, "-Pn", "-n"] + extraflags + hosts,
             stdout=subprocess.PIPE)
        
         while process.returncode is None:
@@ -22,15 +36,15 @@ class NmapScan:
             process.poll()
 
         process.wait()
+        return xmlfile.name
 
-        return self.process_output(xmlfile.name)
+    def is_ipv6(self, addr):
+        return addr.count(':') == 7
 
-    def process_output(self, filename):        
-        results = Results(filename)
+    def process_output(self, filenames=[]):        
+        results = Results(filenames)
         results.parse()
-        results.write_console()
-        os.remove(filename)
-        return results.hosts
+        return results
 
     def verify_system(self):
         discard = open(os.devnull, 'w')
@@ -58,24 +72,26 @@ class Port:
         self.service = service
 
 class Results:
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, filenames=[]):
+        self.filenames = filenames
         self.hosts = []
 
     def parse(self):
-        tree = XML.parse(self.filename)
-        root = tree.getroot()
-        for host_element in root.findall('host'):
-            addr_element = host_element.find('address')
-            host =  Host(addr_element.get('addr'), addr_element.get('addrtype'))
-            self.hosts.append(host)
-            for hostname_element in host_element.findall('hostnames/hostname'):
-                host.add_hostname(hostname_element.get('name'))
-            for port_element in host_element.findall('ports/port'):
-                num = port_element.get('portid')
-                status = port_element.find('state').get('state')
-                service = port_element.find('service').get('name')
-                host.add_port(Port(num, status, service))    
+        for filename in self.filenames:
+            tree = XML.parse(filename)
+            root = tree.getroot()
+            for host_element in root.findall('host'):
+                addr_element = host_element.find('address')
+                host =  Host(addr_element.get('addr'), addr_element.get('addrtype'))
+                self.hosts.append(host)
+                for hostname_element in host_element.findall('hostnames/hostname'):
+                    host.add_hostname(hostname_element.get('name'))
+                for port_element in host_element.findall('ports/port'):
+                    num = port_element.get('portid')
+                    status = port_element.find('state').get('state')
+                    service = port_element.find('service').get('name')
+                    host.add_port(Port(num, status, service))    
+            os.remove(filename)
             
     def write_console(self):
         print '\n'
@@ -84,23 +100,24 @@ class Results:
             for port in host.ports:
                 print '\t', port.num, port.status, port.service
 
-def write_html(hosts):
-    f = open('scan-report.html', 'w')
-    f.write('<html><body>')
-    for host in hosts:
-        f.write('<h2>Host {}={} {}</h2>'.format(host.addr_type, host.addr, ', '.join(host.hostnames)))
-        f.write('<table style="border: 1px solid;"><tr><th>Port</th><th>Status</th><th>Service</th></tr>')
-        for port in host.ports:
-            f.write('<tr><td>{}</td><td>{}</td><td>{}</td></tr>'.format(port.num, port.status, port.service))
-        f.write('</table>')
-    f.write('</body></html>')
-    f.close()
-    return f.name
+    def write_html(self):
+        f = open('scan-report.html', 'w')
+        f.write('<html><body>')
+        for host in self.hosts:
+            f.write('<h2>Host {}={} {}</h2>'.format(host.addr_type, host.addr, ', '.join(host.hostnames)))
+            f.write('<table style="border: 1px solid;"><tr><th>Port</th><th>Status</th><th>Service</th></tr>')
+            for port in host.ports:
+                f.write('<tr><td>{}</td><td>{}</td><td>{}</td></tr>'.format(port.num, port.status, port.service))
+            f.write('</table>')
+        f.write('</body></html>')
+        f.close()
+        return f.name
 
 if __name__ == '__main__':    
-    scan = NmapScan()
-    scan.verify_system()
-    hosts = scan.run(args.hosts)
-    htmlfile = write_html(hosts)
+    scanner = NmapScan()
+    scanner.verify_system()
+    results = scanner.run(args.hosts)
+    results.write_console()
+    htmlfile = results.write_html()
     sys.stderr.write('\n-> Generated HTML report "{}"\n'.format(htmlfile))
 
