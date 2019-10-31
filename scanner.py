@@ -1,4 +1,4 @@
-import os, sys, subprocess, argparse, tempfile
+import os, sys, subprocess, argparse, tempfile, re
 import xml.etree.ElementTree as XML
 
 parser = argparse.ArgumentParser(description='TCP Scan list of given hosts', epilog='Made by Simon with fun and love!')
@@ -11,13 +11,7 @@ class NmapScan:
     bin_name = 'nmap'
 
     def run(self, hosts):
-        others = []
-        ipv6s = []
-        for h in hosts:
-            if self.is_ipv6(h):
-                ipv6s.append(h)
-            else:
-                others.append(h) 
+        ipv6s, others = filter_ipv6(hosts)
         options = []
         if args.fast:   
             options.append("-F")
@@ -31,15 +25,13 @@ class NmapScan:
        
         while process.returncode is None:
             line = process.stdout.readline()
-            if '% done' in line:
-                sys.stderr.write('{}\n'.format(line.rstrip()))
+            match = re.search('About (.*)% done;', line, re.IGNORECASE)
+            if match:
+                sys.stderr.write('{}% progress scanning {}\n'.format(match.group(1), hosts))
             process.poll()
 
         process.wait()
         return xmlfile.name
-
-    def is_ipv6(self, addr):
-        return addr.count(':') == 7
 
     def process_output(self, filenames=[]):        
         results = Results(filenames)
@@ -94,7 +86,7 @@ class Results:
             os.remove(filename)
             
     def write_console(self):
-        print '\n'
+        print '\n-> Results:\n'
         for host in self.hosts:
             print host.addr
             for port in host.ports:
@@ -112,6 +104,16 @@ class Results:
         f.write('</body></html>')
         f.close()
         return f.name
+
+
+def filter_ipv6(hosts): 
+    others, ipv6s = [], []
+    for h in hosts:
+        ipv6s.append(h) if is_ipv6(h) else others.append(h)             
+    return ipv6s, others
+
+def is_ipv6(host):
+    return host.count(':') == 7
 
 if __name__ == '__main__':    
     scanner = NmapScan()
