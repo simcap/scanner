@@ -1,6 +1,10 @@
 import os, sys, subprocess, argparse, tempfile
 import xml.etree.ElementTree as XML
 
+parser = argparse.ArgumentParser(description='TCP Scan list of given IP addresses', epilog='Made by Simon with fun and love!')
+parser.add_argument('ips', help='IPv4 address to be scanned', nargs='*')
+args = parser.parse_args()
+
 class NmapScan:
 
     bin_name = 'nmap'
@@ -22,6 +26,8 @@ class NmapScan:
         results = Results(xmlfile.name)
         results.parse()
         results.write()
+
+        print '\n-> Generated HTML report "{}"'.format(write_html(results.hosts))
 
         os.remove(xmlfile.name)
 
@@ -70,9 +76,18 @@ class Results:
             for port in host.ports:
                 print '\t', port.num, port.status, port.service
 
-parser = argparse.ArgumentParser(description='TCP Scan list of given IP addresses', epilog='Made by Simon with fun and love!')
-parser.add_argument('ips', help='IPv4 address to be scanned', nargs='*')
-args = parser.parse_args()
+def write_html(hosts):
+    f = open('scan-report.html', 'w')
+    f.write('<html><body>')
+    for host in hosts:
+        f.write('<h2>Host {}</h2>'.format(host.addr))
+        f.write('<table style="border: 1px solid;"><tr><th>Port</th><th>Status</th><th>Service</th></tr>')
+        for port in host.ports:
+            f.write('<tr><td>{}</td><td>{}</td><td>{}</td></tr>'.format(port.num, port.status, port.service))
+        f.write('</table>')
+    f.write('</body></html>')
+    f.close()
+    return f.name
 
 if __name__ == '__main__':    
     scan = NmapScan()
