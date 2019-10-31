@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import os, sys, subprocess, argparse, tempfile, re
 import xml.etree.ElementTree as XML
 
@@ -15,13 +17,18 @@ class NmapScan:
         options = []
         if args.fast:   
             options.append("-F")
-        return self.process_output([self.scan(ipv6s, options + ["-6"]), self.scan(others, options)])
+        results = Results([
+            self.scan(ipv6s, options + ["-6"]),
+            self.scan(others, options) 
+        ])
+        results.parse()
+        return results
 
     def scan(self, hosts, extraflags=[]):
         xmlfile = tempfile.NamedTemporaryFile(suffix='-scan.xml', delete=False)
         process = subprocess.Popen(
-            ["nmap", "--stats-every", "0.2", "-oX", xmlfile.name, "-Pn", "-n"] + extraflags + hosts,
-            stdout=subprocess.PIPE)
+            ["nmap", "--stats-every", "0.2", "-oX", xmlfile.name, "-Pn", "-n"] + extraflags + hosts, stdout=subprocess.PIPE
+        )
        
         while process.returncode is None:
             line = process.stdout.readline()
@@ -29,14 +36,9 @@ class NmapScan:
             if match:
                 sys.stderr.write('{}% progress scanning {}\n'.format(match.group(1), hosts))
             process.poll()
-
         process.wait()
-        return xmlfile.name
 
-    def process_output(self, filenames=[]):        
-        results = Results(filenames)
-        results.parse()
-        return results
+        return xmlfile.name
 
     def verify_system(self):
         discard = open(os.devnull, 'w')
@@ -122,4 +124,3 @@ if __name__ == '__main__':
     results.write_console()
     htmlfile = results.write_html()
     sys.stderr.write('\n-> Generated HTML report "{}"\n'.format(htmlfile))
-
