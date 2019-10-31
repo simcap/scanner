@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import os, sys, subprocess, argparse, tempfile, re
 import xml.etree.ElementTree as XML
 
@@ -32,9 +33,9 @@ class NmapScan:
        
         while process.returncode is None:
             line = process.stdout.readline()
-            match = re.search('About (.*)% done;', line, re.IGNORECASE)
+            match = re.search('About (.*)% done;', line.decode('utf-8'), re.IGNORECASE)
             if match:
-                sys.stderr.write('{}% progress scanning {}\n'.format(match.group(1), hosts))
+                print('{}% progress scanning {}'.format(match.group(1), hosts), file=sys.stderr)
             process.poll()
         process.wait()
 
@@ -88,11 +89,11 @@ class Results:
             os.remove(filename)
             
     def write_console(self):
-        print '\n-> Results:\n'
+        print('\n-> Results:')
         for host in self.hosts:
-            print host.addr
+            print(host.addr)
             for port in host.ports:
-                print '\t', port.num, port.status, port.service
+                print('\t', port.num, port.status, port.service)
 
     def write_html(self):
         f = open('scan-report.html', 'w')
@@ -123,4 +124,4 @@ if __name__ == '__main__':
     results = scanner.run(args.hosts)
     results.write_console()
     htmlfile = results.write_html()
-    sys.stderr.write('\n-> Generated HTML report "{}"\n'.format(htmlfile))
+    print('\n-> Generated HTML report "{}"'.format(htmlfile), file=sys.stderr)
