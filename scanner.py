@@ -23,6 +23,10 @@ parser.add_argument('--port-versioning', '-V', help='Enabled version/product det
 
 args = parser.parse_args()
 
+if not args.file and not args.targets:
+    parser.print_help(sys.stderr)
+    sys.exit(1)
+
 class NmapScan:
 
     bin_name = 'nmap'
