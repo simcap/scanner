@@ -44,6 +44,11 @@ You can combine the 3 options above to have the fastest scan
 $ sudo ./scanner.py -S -A -F example.com 93.184.216.34/32
 ```
 
+Allow port software detection and versioning, although it can add significant overhead and can be unreliable!
+```sh
+$ sudo ./scanner.py -V example.com
+```
+
 Working from a file containing all the targets to be scanned (i.e. one entry per newline)
 ```sh
 $ ./scanner.py -f targets.txt
@@ -52,6 +57,7 @@ $ ./scanner.py -f targets.txt
 ## Notes
 
 * the `git` commits and history show my coding timeline and approach.
-* on purpose we did not use the very useful `--webxml` nmap option that already provides HTML reporting using XSLT.
-* our basic HTML report can be easily made better looking with time.
+* we did not use on purpose the very useful `--webxml` nmap option that already provides HTML reporting using XSLT.
+* our basic HTML report can be easily made better looking.
 * the code around HTML generation can be considered rightfully ugly since it embeds logic and view information. A small templating python library could be used. But since the HTML generated is so simple we keep it that way for more portability with the script.
+* program could be made faster by using threading the different jobs on IPv6 targets and other types of targets. Note that `nmap` is already good enough for optimizing when given multiple targets.
