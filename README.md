@@ -99,3 +99,4 @@ $ ./scanner.py -f targets.txt
 * the code around HTML generation can be considered rightfully ugly since it embeds logic and view information. A small templating python library could be used. But since the HTML generated is so simple we keep it that way for more portability with the script.
 * program could be made faster by using threading the different jobs on IPv6 targets and other types of targets. Note that `nmap` is already good enough for optimizing when given multiple targets.
 * the automated testing of this project (see Test section above) would be easily captured in a bash script.
+* ... others bonus/topics/ideas/improvements might be too verbose to write here, so they shall be discussed

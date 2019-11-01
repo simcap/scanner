@@ -42,6 +42,9 @@ class NmapScan:
             options.append("-sS")
         if args.aggressive:   
             options.append("-T4")
+
+        print('-> scanning {} targets: ipv6={}, other={}\n'.format(len(ipv6s)+len(others), len(ipv6s), len(others)), file=sys.stderr)
+
         ipv6s_hosts = self.scan(ipv6s, options + ["-6"])
         other_hosts = self.scan(others, options)
 
