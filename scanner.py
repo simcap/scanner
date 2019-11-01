@@ -4,9 +4,21 @@ from __future__ import print_function
 import os, sys, subprocess, argparse, tempfile, re
 import xml.etree.ElementTree as XML
 
-parser = argparse.ArgumentParser(description='TCP Scan list of given targets', epilog='Made by Simon with fun and love!')
+examples = '''Examples:
+  ./scanner.py 93.184.216.34 example.com 2606:2800:220:1:248:1893:25c8:1946 172.16.36.12/28
+  ./scanner.py --fast example.com
+  ./scanner.py --aggressive 93.184.216.34/32
+  sudo ./scanner.py --stealth 172.16.36.12/28
+
+Made by Simon with fun and love!
+'''
+
+parser = argparse.ArgumentParser(description='TCP scanner list of given targets with various format', epilog=examples, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('targets', help='List of target to be scanned. Format can be any of ipv4, ipv6 or hostname', nargs='*')
-parser.add_argument('--fast', help='Fast mode - Scan fewer ports than the default scan', action='store_true')
+parser.add_argument('--fast', '-F', help='Fast mode - Scan fewer ports than the default scan', action='store_true')
+parser.add_argument('--stealth', '-S', help='Stealth mode - Require privilege, run with `sudo`. Faster and less obtrusive using TCP SYN', action='store_true')
+parser.add_argument('--aggressive', '-A', help='Aggressive mode - Faster in environment where you can scan more aggressively', action='store_true')
+
 args = parser.parse_args()
 
 class NmapScan:
@@ -18,6 +30,10 @@ class NmapScan:
         options = []
         if args.fast:   
             options.append("-F")
+        if args.stealth:   
+            options.append("-sS")
+        if args.aggressive:   
+            options.append("-T4")
         ipv6s_hosts = self.scan(ipv6s, options + ["-6"])
         other_hosts = self.scan(others, options)
         return ipv6s_hosts + other_hosts
@@ -28,7 +44,7 @@ class NmapScan:
 
         xmlfile = tempfile.NamedTemporaryFile(suffix='-scan.xml', delete=False)
         process = subprocess.Popen(
-            ["nmap", "--stats-every", "0.2", "-oX", xmlfile.name, "-Pn", "-n"] + extraflags + targets, stdout=subprocess.PIPE
+            ["nmap", "--stats-every", "0.5", "-oX", xmlfile.name, "-Pn", "-n"] + extraflags + targets, stdout=subprocess.PIPE
         )
        
         while process.returncode is None:

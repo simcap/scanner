@@ -11,11 +11,13 @@ Learning python with a simple TCP scanner wrapping `nmap`.
 
 ## Usage
 
-Display help 
+Full usage and examples are documented in the scanner's help 
 
 ```sh
 $ ./scanner.py -h
 ```
+
+## Examples
 
 Scan list of targets given various format 
 ```sh
@@ -27,7 +29,22 @@ Fast scan (i.e. fewer ports)
 $ ./scanner.py --fast example.com 93.184.216.34/32
 ```
 
-Scan targets given from file (one entry per newline)
+In environments where one can be more aggressive during the scanning
+```sh
+$ ./scanner.py --aggressive example.com 93.184.216.34/32
+```
+
+Stealth and quicker scan (i.e. using TCP SYN)
+```sh
+$ sudo ./scanner.py --stealth example.com 93.184.216.34/32
+```
+
+You can combine the 3 options above to have the fastest scan
+```sh
+$ sudo ./scanner.py -S -A -F example.com 93.184.216.34/32
+```
+
+Working from a file containing all the targets to be scanned (i.e. one entry per newline)
 ```sh
 $ ./scanner.py -f targets.txt
 ```
