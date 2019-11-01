@@ -17,6 +17,29 @@ Full usage and examples are documented in the scanner's help
 $ ./scanner.py -h
 ```
 
+## Test
+
+To test and validate the scanner you can run it on your localhost if you have service running
+
+```sh
+./scanner.py -V localhost # it will detect any services you have running
+```
+
+A better testing strategy - that can be used for local integration tests and/or CI for this project) is if you have `docker` installed. You can run a specific service and verify that the detection is correct. 
+
+First launch an Apache service (you can choose any exposed port to trick the scanner :)):
+
+```sh
+docker run -d --name apache-test-server --rm -p 8080:80 httpd
+```
+
+Then verify you can detect it along with the Apache product and its version
+```sh
+./scanner.py -V localhost
+```
+
+You should see the detection in the console and the HTML report. Remove the service with `docker stop apache-test-server`
+
 ## Examples
 
 Scan list of targets given various format 
@@ -61,3 +84,4 @@ $ ./scanner.py -f targets.txt
 * our basic HTML report can be easily made better looking.
 * the code around HTML generation can be considered rightfully ugly since it embeds logic and view information. A small templating python library could be used. But since the HTML generated is so simple we keep it that way for more portability with the script.
 * program could be made faster by using threading the different jobs on IPv6 targets and other types of targets. Note that `nmap` is already good enough for optimizing when given multiple targets.
+* the automated testing of this project (see Test section above) would be easily captured in a bash script. 
