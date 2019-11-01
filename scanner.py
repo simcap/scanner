@@ -15,6 +15,7 @@ Made by Simon with fun and love!
 
 parser = argparse.ArgumentParser(description='TCP scanner list of given targets with various format', epilog=examples, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('targets', help='List of target to be scanned. Format can be any of ipv4, ipv6 or hostname', nargs='*')
+parser.add_argument('--file', '-f', help='Path of file containing targets. A newline for each entries')
 parser.add_argument('--fast', '-F', help='Fast mode - Scan fewer ports than the default scan', action='store_true')
 parser.add_argument('--stealth', '-S', help='Stealth mode - Require privilege, run with `sudo`. Faster and less obtrusive using TCP SYN', action='store_true')
 parser.add_argument('--aggressive', '-A', help='Aggressive mode - Faster in environment where you can scan more aggressively', action='store_true')
@@ -39,6 +40,7 @@ class NmapScan:
             options.append("-T4")
         ipv6s_hosts = self.scan(ipv6s, options + ["-6"])
         other_hosts = self.scan(others, options)
+
         return ipv6s_hosts + other_hosts
 
     def scan(self, targets, extraflags=[]):
@@ -110,6 +112,7 @@ class Results:
                 product = port_element.find('service').get('product')
                 version = port_element.find('service').get('version')
                 host.add_port(Port(num, status, service, product, version))   
+        
         os.remove(self.filename)
        
         return self.hosts
@@ -142,11 +145,26 @@ def filter_ipv6(targets):
     return ipv6s, others
 
 def is_ipv6(target):
-    return target.count(':') == 7
+    return target.count(':') > 4
+
+def get_targets():
+    filepath = args.file
+    if not filepath:
+        return args.targets
+
+    targets = []
+    f = open(filepath, "r")
+    for line in f:
+        item = line.strip()
+        if not item or item.startswith('#'):
+            continue
+        targets.append(item)
+    f.close()    
+    return targets
 
 if __name__ == '__main__':    
     scanner = NmapScan()
     scanner.verify_system()
-    hosts = scanner.run(args.targets)
+    hosts = scanner.run(get_targets())
     write_console(hosts)
     print('\n-> Generated HTML report "{}"'.format(write_html(hosts)), file=sys.stderr)

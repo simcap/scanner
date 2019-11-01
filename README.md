@@ -1,6 +1,6 @@
 # Scanner
 
-Learning python with a simple TCP scanner wrapping `nmap`. The goal is to make this scanner simple, easy to use, easy to contribute/enhanced and yet powerful enough.
+Learning python with a simple TCP scanner wrapping `nmap`. The goal is to make this scanner simple, easy to use, easy to enhanced and yet useful enough.
 
 * accepts targets in various format: ipv4, ipv6, hostname, CIDR
 * allows a `--fast` and `--stealth` mode
@@ -11,21 +11,35 @@ Learning python with a simple TCP scanner wrapping `nmap`. The goal is to make t
 
 ## Usage
 
-Full usage and examples are documented in the scanner's help 
+Full usage and examples are documented in the help 
 
 ```sh
 $ ./scanner.py -h
+
+or 
+
+$ python scanner.py
+```
+
+## Deploy
+
+Deploy to a machine running python
+
+```sh
+$ scp scanner.py user@10.0.0.2:/tmp
+10.0.0.2:/tmp $ chmod +x scanner.py
+10.0.0.2:/tmp $ ./scanner.py -h
 ```
 
 ## Test
 
-To test and validate the scanner you can run it on your localhost if you have service running
+To test and validate the scanner you can run it on your localhost if you have some services running
 
 ```sh
 ./scanner.py -V localhost # it will detect any services you have running
 ```
 
-A better testing strategy - that can be used for local integration tests and/or CI for this project) is if you have `docker` installed. You can run a specific service and verify that the detection is correct. 
+A better testing strategy - that can be used for local integration tests and/or CI for this project - is if you have `docker` installed. You can run a specific service and verify that the detection is correct. 
 
 First launch an Apache service (you can choose any exposed port to trick the scanner :)):
 
@@ -84,4 +98,4 @@ $ ./scanner.py -f targets.txt
 * our basic HTML report can be easily made better looking.
 * the code around HTML generation can be considered rightfully ugly since it embeds logic and view information. A small templating python library could be used. But since the HTML generated is so simple we keep it that way for more portability with the script.
 * program could be made faster by using threading the different jobs on IPv6 targets and other types of targets. Note that `nmap` is already good enough for optimizing when given multiple targets.
-* the automated testing of this project (see Test section above) would be easily captured in a bash script. 
+* the automated testing of this project (see Test section above) would be easily captured in a bash script.
