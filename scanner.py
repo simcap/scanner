@@ -102,8 +102,7 @@ class Results:
                 status = port_element.find('state').get('state')
                 service = port_element.find('service').get('name')
                 host.add_port(Port(num, status, service))   
-       
-        os.remove(self.filename) 
+        os.remove(self.filename)
        
         return self.hosts
             
@@ -142,5 +141,4 @@ if __name__ == '__main__':
     scanner.verify_system()
     hosts = scanner.run(args.targets)
     write_console(hosts)
-    htmlfile = write_html(hosts)
-    print('\n-> Generated HTML report "{}"'.format(htmlfile), file=sys.stderr)
+    print('\n-> Generated HTML report "{}"'.format(write_html(hosts)), file=sys.stderr)

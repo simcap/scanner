@@ -1,12 +1,12 @@
 # Scanner
 
-Learning python with a simple TCP scanner wrapping `nmap`.
+Learning python with a simple TCP scanner wrapping `nmap`. The goal is to make this scanner simple, easy to use, easy to contribute/enhanced and yet powerful enough.
 
 * accepts targets in various format: ipv4, ipv6, hostname, CIDR
 * allows a `--fast` and `--stealth` mode
 * no dependencies used: increase portability, ease of use on remote machines.
 * leveraging `nmap` functionalities and flags to avoid coding extra logic (ex: progress display)
-* not made Windows compatible as no platform to test it on.
+* no Windows compatibity in mind, as no platform to test it on.
 * compatible python 2 and 3
 
 ## Usage
@@ -51,4 +51,7 @@ $ ./scanner.py -f targets.txt
 
 ## Notes
 
-The `git` commits and history show my coding timeline and approach.
+* the `git` commits and history show my coding timeline and approach.
+* on purpose we did not use the very useful `--webxml` nmap option that already provides HTML reporting using XSLT.
+* our basic HTML report can be easily made better looking with time.
+* the code around HTML generation can be considered rightfully ugly since it embeds logic and view information. A small templating python library could be used. But since the HTML generated is so simple we keep it that way for more portability with the script.
